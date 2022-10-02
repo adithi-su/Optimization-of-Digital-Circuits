@@ -1,3 +1,55 @@
+#IMPLEMENTATION 1 
+import pyeda 
+import graphviz
+import os
+import tempfile
+import pydot
+from PIL import Image
+from pyeda.inter import *
+import IPython
+from sympy.logic.boolalg import is_nnf
+
+def convert_to_boolean_variables(cover):
+  w=0
+  cover_modified=[]
+  for item in cover:
+    t = 1
+    for j in range(0,len(item)):
+      if item[j]=="'":
+        continue
+      var = item[j]
+      if j<(len(item)-1) and item[j+1]=="'":
+        var = pyeda.boolalg.expr.Not(var,simplify=True)
+        j=j+2
+      t = pyeda.boolalg.expr.And(t,var,simplify=True)
+    cover_modified.append(t)
+    w = pyeda.boolalg.expr.Or(w,t,simplify=True) 
+  w = pyeda.boolalg.expr.Expression.simplify(w)  
+  return cover_modified,w
+
+N = int(input("Enter the number of variables, followed by the variables- "))
+v = []
+for i in range(N): 
+    v.append(input())
+cover = []
+cover = input("Enter minterms separated by space, for complemented literals, use ' after the literal, example: a'\n").split()
+print("\nThe entered boolean expression is \n" + " + ".join(cover))
+n=len(cover)
+cover,w = convert_to_boolean_variables(cover)
+print(cover)
+print(w)
+
+dot_str=expr2bdd(w).to_dot()
+dot = pydot.graph_from_dot_data(dot_str)[0]
+
+with tempfile.TemporaryDirectory() as tmpdirname:
+  tmp_path = os.path.join(tmpdirname,'dag.png')
+  dot.write_png(tmp_path)
+  image=Image.open(tmp_path)
+  os.remove(tmp_path)
+image
+
+#IMPLEMENTATION 2 (without PyEDA) - work on the .values() part + post ITE
 class HashTable:
 	# Create empty bucket list of given size
 	def __init__(self, size):
